@@ -61,7 +61,7 @@ type goCollector struct {
 // will block until runtime.ReadMemStats succeeds. (The problem might be solved
 // in Go1.13, see https://github.com/golang/go/issues/19812 for the related Go
 // issue.)
-func NewGoCollector() Collector {
+func NewGoCollector(labels Labels) Collector {
 	return &goCollector{
 		goroutinesDesc: NewDesc(
 			"go_goroutines",
@@ -78,7 +78,7 @@ func NewGoCollector() Collector {
 		goInfoDesc: NewDesc(
 			"go_info",
 			"Information about the Go environment.",
-			nil, Labels{"version": runtime.Version()}),
+			nil, concatLabels(labels, Labels{"version": runtime.Version()})),
 		msLast:    &runtime.MemStats{},
 		msRead:    runtime.ReadMemStats,
 		msMaxWait: time.Second,
@@ -88,7 +88,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("alloc_bytes"),
 					"Number of bytes allocated and still in use.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.Alloc) },
 				valType: GaugeValue,
@@ -96,7 +96,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("alloc_bytes_total"),
 					"Total number of bytes allocated, even if freed.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.TotalAlloc) },
 				valType: CounterValue,
@@ -104,7 +104,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("sys_bytes"),
 					"Number of bytes obtained from system.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.Sys) },
 				valType: GaugeValue,
@@ -112,7 +112,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("lookups_total"),
 					"Total number of pointer lookups.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.Lookups) },
 				valType: CounterValue,
@@ -120,7 +120,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("mallocs_total"),
 					"Total number of mallocs.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.Mallocs) },
 				valType: CounterValue,
@@ -128,7 +128,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("frees_total"),
 					"Total number of frees.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.Frees) },
 				valType: CounterValue,
@@ -136,7 +136,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_alloc_bytes"),
 					"Number of heap bytes allocated and still in use.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapAlloc) },
 				valType: GaugeValue,
@@ -144,7 +144,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_sys_bytes"),
 					"Number of heap bytes obtained from system.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapSys) },
 				valType: GaugeValue,
@@ -152,7 +152,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_idle_bytes"),
 					"Number of heap bytes waiting to be used.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapIdle) },
 				valType: GaugeValue,
@@ -160,7 +160,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_inuse_bytes"),
 					"Number of heap bytes that are in use.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapInuse) },
 				valType: GaugeValue,
@@ -168,7 +168,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_released_bytes"),
 					"Number of heap bytes released to OS.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapReleased) },
 				valType: GaugeValue,
@@ -176,7 +176,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("heap_objects"),
 					"Number of allocated objects.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.HeapObjects) },
 				valType: GaugeValue,
@@ -184,7 +184,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("stack_inuse_bytes"),
 					"Number of bytes in use by the stack allocator.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.StackInuse) },
 				valType: GaugeValue,
@@ -192,7 +192,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("stack_sys_bytes"),
 					"Number of bytes obtained from system for stack allocator.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.StackSys) },
 				valType: GaugeValue,
@@ -200,7 +200,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("mspan_inuse_bytes"),
 					"Number of bytes in use by mspan structures.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.MSpanInuse) },
 				valType: GaugeValue,
@@ -208,7 +208,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("mspan_sys_bytes"),
 					"Number of bytes used for mspan structures obtained from system.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.MSpanSys) },
 				valType: GaugeValue,
@@ -216,7 +216,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("mcache_inuse_bytes"),
 					"Number of bytes in use by mcache structures.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.MCacheInuse) },
 				valType: GaugeValue,
@@ -224,7 +224,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("mcache_sys_bytes"),
 					"Number of bytes used for mcache structures obtained from system.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.MCacheSys) },
 				valType: GaugeValue,
@@ -232,7 +232,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("buck_hash_sys_bytes"),
 					"Number of bytes used by the profiling bucket hash table.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.BuckHashSys) },
 				valType: GaugeValue,
@@ -240,7 +240,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("gc_sys_bytes"),
 					"Number of bytes used for garbage collection system metadata.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.GCSys) },
 				valType: GaugeValue,
@@ -248,7 +248,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("other_sys_bytes"),
 					"Number of bytes used for other system allocations.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.OtherSys) },
 				valType: GaugeValue,
@@ -256,7 +256,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("next_gc_bytes"),
 					"Number of heap bytes when next garbage collection will take place.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.NextGC) },
 				valType: GaugeValue,
@@ -264,7 +264,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("last_gc_time_seconds"),
 					"Number of seconds since 1970 of last garbage collection.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return float64(ms.LastGC) / 1e9 },
 				valType: GaugeValue,
@@ -272,7 +272,7 @@ func NewGoCollector() Collector {
 				desc: NewDesc(
 					memstatNamespace("gc_cpu_fraction"),
 					"The fraction of this program's available CPU time used by the GC since the program started.",
-					nil, nil,
+					nil, labels,
 				),
 				eval:    func(ms *runtime.MemStats) float64 { return ms.GCCPUFraction },
 				valType: GaugeValue,
@@ -312,9 +312,9 @@ func (c *goCollector) Collect(ch chan<- Metric) {
 		close(done)
 	}()
 
-	ch <- MustNewConstMetric(c.goroutinesDesc, GaugeValue, float64(runtime.NumGoroutine()))
+	ch <- MustNewConstMetric(c.goroutinesDesc, GaugeValue, float64(runtime.NumGoroutine()), c.nil...)
 	n, _ := runtime.ThreadCreateProfile(nil)
-	ch <- MustNewConstMetric(c.threadsDesc, GaugeValue, float64(n))
+	ch <- MustNewConstMetric(c.threadsDesc, GaugeValue, float64(n), c.nil...)
 
 	var stats debug.GCStats
 	stats.PauseQuantiles = make([]time.Duration, 5)
@@ -325,9 +325,9 @@ func (c *goCollector) Collect(ch chan<- Metric) {
 		quantiles[float64(idx+1)/float64(len(stats.PauseQuantiles)-1)] = pq.Seconds()
 	}
 	quantiles[0.0] = stats.PauseQuantiles[0].Seconds()
-	ch <- MustNewConstSummary(c.gcDesc, uint64(stats.NumGC), stats.PauseTotal.Seconds(), quantiles)
+	ch <- MustNewConstSummary(c.gcDesc, uint64(stats.NumGC), stats.PauseTotal.Seconds(), quantiles, c.nil...)
 
-	ch <- MustNewConstMetric(c.goInfoDesc, GaugeValue, 1)
+	ch <- MustNewConstMetric(c.goInfoDesc, GaugeValue, 1, c.nil...)
 
 	timer := time.NewTimer(c.msMaxWait)
 	select {
@@ -354,7 +354,7 @@ func (c *goCollector) Collect(ch chan<- Metric) {
 
 func (c *goCollector) msCollect(ch chan<- Metric, ms *runtime.MemStats) {
 	for _, i := range c.msMetrics {
-		ch <- MustNewConstMetric(i.desc, i.valType, i.eval(ms))
+		ch <- MustNewConstMetric(i.desc, i.valType, i.eval(ms), c.nil...)
 	}
 }
 
@@ -363,4 +363,19 @@ type memStatsMetrics []struct {
 	desc    *Desc
 	eval    func(*runtime.MemStats) float64
 	valType ValueType
+}
+
+func concatLabels(l1, l2 Labels) Labels {
+	ret := make(Labels, len(l1)+len(l2))
+	for k, v := range l1 {
+		ret[k] = v
+	}
+	for k, v := range l2 {
+		if _, ok := l1[k]; ok {
+			panic("overlapping label " + k)
+		}
+		ret[k] = v
+	}
+
+	return ret
 }
